@@ -120,6 +120,6 @@ void ProcessBuiltInSdkDirectory(string path)
 assembly.Write(corePath);
 Console.WriteLine($"Updated language version to {version}.");
 
-Directory.CreateSymbolicLink(Path.Combine(dataPath, "NetCoreRuntime"), sdk.Location);
+Directory.CreateSymbolicLink(Path.Combine(dataPath, "NetCoreRuntime"), DotNetInstallation.Current.Location);
 Directory.CreateSymbolicLink(Path.Combine(dataPath, "DotNetSdkRoslyn"), sdk.RoslynLocation);
 Console.WriteLine($"Linked to .NET SDK at {sdk.Location}");
