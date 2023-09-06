@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using UnityRoslynPatcher;
+using UnityRoslynUpdater;
 using AsmResolver.DotNet;
 using AsmResolver.PE.DotNet.Cil;
 

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Win32;
 using NuGet.Versioning;
 
-namespace UnityRoslynPatcher;
+namespace UnityRoslynUpdater;
 
 public sealed class DotNetInstallation
 {

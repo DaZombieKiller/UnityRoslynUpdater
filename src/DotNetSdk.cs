@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using NuGet.Versioning;
 
-namespace UnityRoslynPatcher;
+namespace UnityRoslynUpdater;
 
 public sealed class DotNetSdk
 {

@@ -1,6 +1,6 @@
 ﻿using AsmResolver.DotNet;
 
-namespace UnityRoslynPatcher;
+namespace UnityRoslynUpdater;
 
 public static class TypeDefinitionExtensions
 {
