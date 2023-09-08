@@ -2,6 +2,8 @@
 using UnityRoslynUpdater;
 using AsmResolver.DotNet;
 using AsmResolver.PE.DotNet.Cil;
+using AsmResolver.DotNet.Signatures.Types;
+using AsmResolver.DotNet.Signatures;
 
 if (args.Length < 1)
 {
@@ -42,15 +44,8 @@ var sdk = DotNetInstallation.Current.EnumerateSDKs().OrderBy(static sdk => sdk.V
 // This approach is preferred because it does not require modifying anything else, all of
 // the IDE support packages should automatically pick up this change without further edits.
 //
-var corePath = Path.Combine(dataPath, "Managed", "UnityEngine", "UnityEditor.CoreModule.dll");
-var assembly = AssemblyDefinition.FromFile(corePath);
 
-// We're going to find a call to set_LanguageVersion in the default constructor, and then
-// change the value it passes in to whatever the latest C# language version is at this time.
-var target = assembly.Modules[0].GetTypeByFullName("UnityEditor.Compilation.ScriptCompilerOptions");
-var version = sdk.ComputeLatestCSharpLangVersion();
-
-if (target is null || !TryPatchLangVersion(target, version))
+if (!TryPatchCompilerOptions())
 {
     Console.Error.WriteLine(
         """
@@ -62,10 +57,24 @@ if (target is null || !TryPatchLangVersion(target, version))
     return;
 }
 
-bool TryPatchLangVersion(TypeDefinition type, string version)
+bool TryPatchCompilerOptions()
 {
-    var method = type.GetDefaultConstructor();
-    var setter = type.GetMethodByName("set_LanguageVersion");
+    var dllPath = Path.Combine(dataPath, "Managed", "UnityEngine", "UnityEditor.CoreModule.dll");
+
+    if (!File.Exists(dllPath))
+        return false;
+
+    // We're going to find a call to set_LanguageVersion in the default constructor, and then
+    // change the value it passes in to whatever the latest C# language version is at this time.
+    var assembly = AssemblyDefinition.FromFile(dllPath);
+    var target   = assembly.Modules[0].GetTypeByFullName("UnityEditor.Compilation.ScriptCompilerOptions");
+    var version  = sdk.ComputeLatestCSharpLangVersion();
+
+    if (target is null)
+        return false;
+
+    var method = target.GetDefaultConstructor();
+    var setter = target.GetMethodByName("set_LanguageVersion");
 
     if (method is null || setter is null)
         return false;
@@ -79,11 +88,90 @@ bool TryPatchLangVersion(TypeDefinition type, string version)
         {
             Debug.Assert(instructions[i - 1].OpCode == CilOpCodes.Ldstr);
             instructions[i - 1].Operand = version;
+
+            // Instruction has been patched, now save our changes and move on.
+            assembly.Write(dllPath);
+            Console.WriteLine($"Updated language version to {version}.");
             return true;
         }
     }
 
     return false;
+}
+
+//
+// Starting with Unity 2022, Unity.SourceGenerators.dll is used by Unity to process
+// .cs files and discover MonoBehaviour implementations in them. However, currently
+// it uses the NamespaceDeclarationSyntax class, not BaseNamespaceDeclarationSyntax 
+// which causes it to fail on FileScopedNamespaceDeclarationSyntax.
+//
+// We patch the TypeNameHelper.GetTypeInformation function to replace all references
+// to NamespaceDeclarationSyntax with BaseNamespaceDeclarationSyntax, which fixes it.
+//
+
+TryPatchSourceGenerator(Path.Combine(dataPath, "Tools", "Unity.SourceGenerators", "Unity.SourceGenerators.dll"));
+TryPatchSourceGenerator(Path.Combine(dataPath, "Tools", "Compilation", "Unity.SourceGenerators", "Unity.SourceGenerators.dll"));
+
+bool TryPatchSourceGenerator(string dllPath)
+{
+    const string NamespaceDeclarationSyntax = "Microsoft.CodeAnalysis.CSharp.Syntax.NamespaceDeclarationSyntax";
+
+    if (!File.Exists(dllPath))
+        return false;
+
+    var assembly = AssemblyDefinition.FromFile(dllPath);
+    var module   = assembly.Modules[0];
+    var target   = module.GetTypeByFullName("Unity.MonoScriptGenerator.TypeNameHelper");
+    var method   = target?.GetMethodByName("GetTypeInformation");
+    var patches  = 0;
+    
+    if (target is null || method is null)
+        return false;
+
+    if (method.CilMethodBody is not { Instructions: var instructions } body)
+        return false;
+
+    var baseNamespaceDeclarationSyntax = module.DefaultImporter.ImportType(
+        new TypeReference(
+            module.GetAssemblyReferenceByName("Microsoft.CodeAnalysis.CSharp"),
+            "Microsoft.CodeAnalysis.CSharp.Syntax",
+            "BaseNamespaceDeclarationSyntax"));
+
+    foreach (var local in body.LocalVariables)
+    {
+        if (local.VariableType is TypeDefOrRefSignature { FullName: NamespaceDeclarationSyntax } type)
+        {
+            local.VariableType = new TypeDefOrRefSignature(baseNamespaceDeclarationSyntax);
+            patches++;
+        }
+    }
+
+    for (int i = 0; i < instructions.Count; i++)
+    {
+        if (instructions[i].Operand is TypeReference { FullName: NamespaceDeclarationSyntax } type)
+        {
+            instructions[i].Operand = baseNamespaceDeclarationSyntax;
+            patches++;
+        }
+        else if (instructions[i].Operand is MemberReference
+            {
+                IsMethod: true,
+                Parent: TypeReference { FullName: NamespaceDeclarationSyntax } parent
+            } member)
+        {
+            var reference = new MemberReference(baseNamespaceDeclarationSyntax, member.Name, member.Signature as MemberSignature);
+            instructions[i].Operand = module.DefaultImporter.ImportMethod(reference);
+            patches++;
+        }
+    }
+
+    if (patches > 0)
+    {
+        assembly.Write(dllPath);
+        Console.WriteLine($"Patched source generator assembly at {Path.GetRelativePath(editorPath, dllPath)}.");
+    }
+
+    return true;
 }
 
 //
@@ -116,9 +204,6 @@ void ProcessBuiltInSdkDirectory(string path)
     // it can be updated.
     Directory.Delete(path, recursive: false);
 }
-
-assembly.Write(corePath);
-Console.WriteLine($"Updated language version to {version}.");
 
 Directory.CreateSymbolicLink(Path.Combine(dataPath, "NetCoreRuntime"), DotNetInstallation.Current.Location);
 Directory.CreateSymbolicLink(Path.Combine(dataPath, "DotNetSdkRoslyn"), sdk.RoslynLocation);

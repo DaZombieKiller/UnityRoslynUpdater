@@ -18,4 +18,20 @@ public static class ModuleDefinitionExtensions
 
         return null;
     }
+
+    public static AssemblyReference? GetAssemblyReferenceByName(this ModuleDefinition module, string name)
+    {
+        ArgumentNullException.ThrowIfNull(module);
+        ArgumentNullException.ThrowIfNull(name);
+
+        foreach (AssemblyReference reference in module.AssemblyReferences)
+        {
+            if (reference.Name == name)
+            {
+                return reference;
+            }
+        }
+
+        return null;
+    }
 }
