@@ -16,7 +16,7 @@ For example: `UnityRoslynUpdater.exe "C:\Program Files\Unity\Hub\Editor\2022.3.8
 * Not Supported
   * Requires runtime features or BCL changes that Unity does not have. Attempting to use the feature may result in compiler errors.
 * Crash
-  * Requires runtime features that Unity does not have. Attempting to use the feature may result in crashes.
+  * Requires runtime features that Unity does not have. Attempting to use the feature may compile, but will result in crashes.
 
 ## C# 11
 Feature | Status
