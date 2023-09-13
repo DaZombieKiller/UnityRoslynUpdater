@@ -18,6 +18,16 @@ For example: `UnityRoslynUpdater.exe "C:\Program Files\Unity\Hub\Editor\2022.3.8
 * Crash
   * Requires runtime features that Unity does not have. Attempting to use the feature may compile, but will result in crashes.
 
+## C# 12
+Feature | Status
+-|-
+[Primary constructors](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12#primary-constructors) | Working
+[Optional parameters in lambda expressions](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12#default-lambda-parameters) | Working
+[Alias any type](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12#alias-any-type) | Working
+[Inline arrays](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12#inline-arrays) | Not Supported
+[Collection expressions](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12#collection-expressions) | Working
+[Interceptors](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12#interceptors) | Not Supported
+
 ## C# 11
 Feature | Status
 -|-
