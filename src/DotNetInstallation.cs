@@ -30,7 +30,12 @@ public sealed class DotNetInstallation
 
     private static DotNetInstallation GetCurrentInstallation()
     {
-        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\dotnet\Setup\InstalledVersions\x64", "InstallLocation", null) is not string location)
+        string? location = Environment.GetEnvironmentVariable("DOTNET_ROOT");
+
+        if (string.IsNullOrEmpty(location))
+            location = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\dotnet\Setup\InstalledVersions\x64", "InstallLocation", null) as string;
+
+        if (string.IsNullOrEmpty(location))
             location = GetDefaultInstallationLocation();
 
         return new DotNetInstallation(location);
