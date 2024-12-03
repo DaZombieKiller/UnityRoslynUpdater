@@ -8,6 +8,25 @@ A tool to update the Roslyn compiler and C# language versions for a Unity instal
 
 For example: `UnityRoslynUpdater.exe "C:\Program Files\Unity\Hub\Editor\2022.3.8f1\Editor"`
 
+# Using C# 12+
+By default, C# 11 is the most recent language version with Visual Studio support.
+
+This is because the `com.unity.ide.visualstudio` package does not recognize newer versions, and will limit the `<LangVersion>` property in generated `.csproj` files to `11`.
+
+To work around this issue, create a `Directory.Build.targets` file next to your project's `Assets` directory containing the following (replace `12` with your desired language version):
+
+```xml
+<Project>
+  <PropertyGroup>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+</Project>
+```
+
+After you have done this, navigate to Edit -> Project Settings -> Player in Unity, and scroll down to the 'Additional Compiler Arguments' section. Add a new entry containing `-langversion:12` (again replacing `12` with your desired language version).
+
+Note that you may need to delete the Visual Studio cache directory (`.vs`) in order for these changes to take effect.
+
 # Language Support
 * Working
   * Feature works exactly as expected.
