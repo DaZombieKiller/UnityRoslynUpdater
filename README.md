@@ -9,7 +9,7 @@ A tool to update the Roslyn compiler and C# language versions for a Unity instal
 For example: `UnityRoslynUpdater.exe "C:\Program Files\Unity\Hub\Editor\2022.3.8f1\Editor"`
 
 # Using C# 12+
-By default, C# 11 is the most recent language version with Visual Studio support.
+C# 11 is the most recent language version that works correctly with Visual Studio in a UnityRoslynUpdater-patched Unity install.
 
 This is because the `com.unity.ide.visualstudio` package does not recognize newer versions, and will limit the `<LangVersion>` property in generated `.csproj` files to `11`.
 
