@@ -18,6 +18,21 @@ For example: `UnityRoslynUpdater.exe "C:\Program Files\Unity\Hub\Editor\2022.3.8
 * Crash
   * Requires runtime features that Unity does not have. Attempting to use the feature may compile, but will result in crashes.
 
+## C# 13
+Feature | Status
+-|-
+[params collections](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#params-collections) | Working
+[New lock type and semantics](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#new-lock-object) | Not Supported
+[New escape sequence - \\e](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#new-escape-sequence) | Working
+[Method group natural type improvements](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#method-group-natural-type) | Working
+[Implicit indexer access in object initializers](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#implicit-index-access) | Working
+[Enable ref locals and unsafe contexts in iterators and async methods](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#ref-and-unsafe-in-iterators-and-async-methods) | Working
+[Enable ref struct types to implement interfaces](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#ref-struct-interfaces) | Not Supported
+[Allow ref struct types as arguments for type parameters in generics](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#allows-ref-struct) | Not Supported
+[Partial properties and indexers](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#more-partial-members) | Working
+[Overload resolution priority](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#overload-resolution-priority) | PolySharp
+[The `field` keyword](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13#the-field-keyword) | Working
+
 ## C# 12
 Feature | Status
 -|-
