@@ -4,6 +4,7 @@ using AsmResolver.DotNet;
 using AsmResolver.PE.DotNet.Cil;
 using AsmResolver.DotNet.Signatures.Types;
 using AsmResolver.DotNet.Signatures;
+using System.IO.Compression;
 
 if (args.Length < 1)
 {
@@ -208,3 +209,27 @@ void ProcessBuiltInSdkDirectory(string path)
 Directory.CreateSymbolicLink(Path.Combine(dataPath, "NetCoreRuntime"), DotNetInstallation.Current.Location);
 Directory.CreateSymbolicLink(Path.Combine(dataPath, "DotNetSdkRoslyn"), sdk.RoslynLocation);
 Console.WriteLine($"Linked to .NET SDK at {sdk.Location}");
+
+// Add netstandard.xml if not already present, to provide IntelliSense support for the BCL.
+var netStandardLink = @"https://www.nuget.org/api/v2/package/NETStandard.Library.Ref/2.1.0";
+var netStandardPath = Path.Combine(dataPath, "NetStandard", "Ref", "2.1.0", "netstandard.xml");
+
+if (!File.Exists(netStandardPath) && File.Exists(Path.ChangeExtension(netStandardPath, ".dll")))
+{
+    Console.WriteLine("Downloading NETStandard.Library.Ref 2.1.0...");
+    using var stream = new MemoryStream();
+    using var client = new HttpClient();
+    using var result = await client.GetAsync(netStandardLink, HttpCompletionOption.ResponseHeadersRead);
+    result.EnsureSuccessStatusCode();
+
+    await using (var content = await result.Content.ReadAsStreamAsync())
+        await content.CopyToAsync(stream);
+
+    using var zip = new ZipArchive(stream);
+    using var xml = zip.GetEntry("ref/netstandard2.1/netstandard.xml")!.Open();
+
+    // Save netstandard.xml
+    using var destination = File.Create(netStandardPath);
+    await xml.CopyToAsync(destination);
+    Console.WriteLine($"Added missing netstandard.xml at {netStandardPath}");
+}
