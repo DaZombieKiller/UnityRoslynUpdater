@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics;
-using UnityRoslynUpdater;
-using AsmResolver.DotNet;
-using AsmResolver.PE.DotNet.Cil;
-using AsmResolver.DotNet.Signatures.Types;
-using AsmResolver.DotNet.Signatures;
 using System.IO.Compression;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
+using UnityRoslynUpdater;
 
 if (args.Length < 1)
 {
