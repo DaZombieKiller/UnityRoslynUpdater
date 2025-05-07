@@ -5,29 +5,34 @@ using AsmResolver.DotNet.Signatures;
 using AsmResolver.PE.DotNet.Cil;
 using UnityRoslynUpdater;
 
-if (args.Length < 1)
-{
-    Console.Error.WriteLine(
-        """
-        Please provide the path to the 'Editor' directory of the Unity
-        installation that you wish to link to a newer .NET SDK version.
-        """);
+const string errorMsg =
+    """
+    Please provide the path to the 'Editor' directory of the Unity
+    installation that you wish to link to a newer .NET SDK version.
+    """;
 
-    return;
+string editorPath;
+
+if (args.Length >= 1)
+{
+    editorPath = Path.GetFullPath(args[0]);
+}
+else
+{
+    editorPath = EditorFinder.ChooseEditorFullPath();
+
+    if (string.IsNullOrEmpty(editorPath))
+    {
+        Console.Error.WriteLine(errorMsg);
+        return;
+    }
 }
 
-var editorPath = Path.GetFullPath(args[0]);
 var dataPath = Path.Combine(editorPath, "Data");
 
 if (!Directory.Exists(dataPath))
 {
-    Console.Error.WriteLine(
-        """
-        The 'Data' directory could not be located. Please provide the
-        path to the 'Editor' directory of the Unity installation that
-        you wish to link to a newer .NET SDK version.
-        """);
-
+    Console.Error.WriteLine(errorMsg);
     return;
 }
 
