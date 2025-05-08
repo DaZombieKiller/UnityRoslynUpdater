@@ -59,7 +59,7 @@ public static class EditorFinder
 
         try
         {
-            foreach (var dir in Directory.GetDirectories(rootPath))
+            foreach (var dir in Directory.EnumerateDirectories(rootPath))
             {
                 var editorExePath = Path.Combine(dir, "Editor", "Unity.exe");
                 if (File.Exists(editorExePath))
