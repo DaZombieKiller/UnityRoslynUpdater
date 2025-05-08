@@ -26,16 +26,14 @@ public static class EditorFinder
             }
             catch (JsonException)
             {
-                Console.WriteLine($"Error parsing {userPathFile}. Falling back to default path.");
+                Console.Error.WriteLine($"Error parsing {userPathFile}. Falling back to default path.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error reading {userPathFile}: {ex.Message}. Falling back to default path.");
+                Console.Error.WriteLine($"Error reading {userPathFile}: {ex.Message}. Falling back to default path.");
             }
         }
 
-        // Use default as fallback
-        // this is the case most of the time I think
         var defaultPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
             "Unity", "Hub", "Editor");
@@ -72,7 +70,7 @@ public static class EditorFinder
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error enumerating Unity installations: {ex.Message}");
+            Console.Error.WriteLine($"Error enumerating Unity installations: {ex.Message}");
         }
 
         return editorPaths;
@@ -91,11 +89,8 @@ public static class EditorFinder
         }
 
         Console.WriteLine("Select an editor to patch:");
-        // Console.WriteLine("Select an editor to patch. Ctrl+C to cancel:");
         for (var i = 0; i < editorPaths.Count; i++)
         {
-            // string versionInfo = Path.GetFileName(Path.GetDirectoryName(editorPaths[i]) ?? string.Empty);
-            // Console.WriteLine($"  [{i}] {versionInfo}");
             Console.WriteLine($"  [{i}] {editorPaths[i]}");
         }
 
