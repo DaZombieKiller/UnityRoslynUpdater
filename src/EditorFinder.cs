@@ -1,118 +1,48 @@
-﻿using System.Text.Json;
+﻿using Microsoft.Win32;
 
 namespace UnityRoslynUpdater;
 
 public static class EditorFinder
 {
     /// <summary>
-    /// First try parse Unity Hub secondaryInstallPath.json
-    /// If unspecified, then fall back to default path
+    /// Including both Unity Hub managed and standalone installations.
     /// </summary>
-    public static string GetHubEditorRoot()
-    {
-        var userPathFile = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "UnityHub", "secondaryInstallPath.json");
-
-        if (File.Exists(userPathFile))
-        {
-            try
-            {
-                var userPath = JsonDocument.Parse(File.ReadAllText(userPathFile)).RootElement.GetString() ?? string.Empty;
-                if (!string.IsNullOrEmpty(userPath) && Directory.Exists(userPath))
-                {
-                    return userPath;
-                }
-            }
-            catch (JsonException)
-            {
-                Console.Error.WriteLine($"Error parsing {userPathFile}. Falling back to default path.");
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error reading {userPathFile}: {ex.Message}. Falling back to default path.");
-            }
-        }
-
-        var defaultPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-            "Unity", "Hub", "Editor");
-
-        if (Directory.Exists(defaultPath))
-        {
-            return defaultPath;
-        }
-
-        // No unity hub installation path found
-        return string.Empty;
-    }
-
-    /// <summary>
-    /// Gets all editor paths under Unity Hub installation root
-    /// </summary>
-    public static List<string> GetHubEditorPaths()
+    /// <returns></returns>
+    public static List<string> GetRegistryEditorPaths()
     {
         var editorPaths = new List<string>();
-        var rootPath = GetHubEditorRoot();
-        if (string.IsNullOrEmpty(rootPath)) return editorPaths;
+        var regPaths = new[] {
+            Registry.CurrentUser,
+            Registry.LocalMachine
+        };
 
-        try
+        foreach (var hive in regPaths)
         {
-            foreach (var dir in Directory.EnumerateDirectories(rootPath))
+            using var key = hive.OpenSubKey(@"SOFTWARE\Unity Technologies\Installer");
+            if (key == null) continue;
+
+            foreach (var subKeyName in key.GetSubKeyNames())
             {
-                var editorExePath = Path.Combine(dir, "Editor", "Unity.exe");
-                if (File.Exists(editorExePath))
-                {
-                    editorPaths.Add(Path.GetFullPath(Path.Combine(dir, "Editor")));
-                }
+                using var subKey = key.OpenSubKey(subKeyName);
+                var installPath = subKey?.GetValue("Location x64") as string;
+
+                if (string.IsNullOrEmpty(installPath)) continue;
+
+                var editorPath = Path.Combine(installPath, "Editor");
+                editorPaths.Add(editorPath);
             }
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error enumerating Unity installations: {ex.Message}");
         }
 
         return editorPaths;
     }
 
     /// <summary>
-    /// Find standalone Unity installations that are not managed by Unity Hub
-    /// Only look for those in Program Files
-    /// </summary>
-    public static List<string> GetStandaloneEditorPaths()
-    {
-        var editorPaths = new List<string>();
-        var rootPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-
-        try
-        {
-            foreach (var dir in Directory.EnumerateDirectories(rootPath))
-            {
-                if (!Path.GetFileName(dir).StartsWith("Unity", StringComparison.OrdinalIgnoreCase)) continue;
-
-                var editorExePath = Path.Combine(dir, "Editor", "Unity.exe");
-                if (File.Exists(editorExePath))
-                {
-                    editorPaths.Add(Path.GetFullPath(Path.Combine(dir, "Editor")));
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error enumerating standalone Unity installations: {ex.Message}");
-        }
-
-        return editorPaths;
-    }
-
-    /// <summary>
-    /// Let user choose from available installations by typing list index
+    /// Let user interactively choose one installation path by typing list index.
     /// </summary>
     public static string ChooseEditorFullPath()
     {
         var editorPaths = new List<string>();
-        editorPaths.AddRange(GetHubEditorPaths());
-        editorPaths.AddRange(GetStandaloneEditorPaths());
+        editorPaths.AddRange(GetRegistryEditorPaths());
 
         if (editorPaths.Count == 0)
         {
