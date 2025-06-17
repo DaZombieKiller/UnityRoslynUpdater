@@ -1,12 +1,20 @@
 # Unity Roslyn Updater
 A tool to update the Roslyn compiler and C# language versions for a Unity installation.
 
+Supports Windows and macOS.
+
 # Usage
 **NOTE**: This will modify your Unity installation folder, administrative privileges are required!
 
 `UnityRoslynUpdater.exe <path to Unity Editor folder>`
 
-For example: `UnityRoslynUpdater.exe "C:\Program Files\Unity\Hub\Editor\2022.3.8f1\Editor"`
+or
+
+`dotnet UnityRoslynUpdater.dll <path to Unity Editor folder>`
+
+Example (Windows): `UnityRoslynUpdater.exe "C:\Program Files\Unity\Hub\Editor\2022.3.8f1\Editor"`
+
+Example (macOS): `dotnet UnityRoslynUpdater.dll "/Applications/Unity/Hub/Editor/6000.1.7f1/Unity.app"`
 
 # Notes on C# 14+
 Due to changes introduced in C# 14, some code may no longer compile.
