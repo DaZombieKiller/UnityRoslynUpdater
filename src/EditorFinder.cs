@@ -10,26 +10,49 @@ public static class EditorFinder
     /// <returns></returns>
     public static List<string> GetRegistryEditorPaths()
     {
+        var platform = PlatformHelper.GetPlatform();
         var editorPaths = new List<string>();
-        var regPaths = new[] {
-            Registry.CurrentUser,
-            Registry.LocalMachine
-        };
-
-        foreach (var hive in regPaths)
+        if (platform is Platform.Windows)
         {
-            using var key = hive.OpenSubKey(@"SOFTWARE\Unity Technologies\Installer");
-            if (key == null) continue;
+            var regPaths = new[] {
+                Registry.CurrentUser,
+                Registry.LocalMachine
+            };
 
-            foreach (var subKeyName in key.GetSubKeyNames())
+            foreach (var hive in regPaths)
             {
-                using var subKey = key.OpenSubKey(subKeyName);
-                var installPath = subKey?.GetValue("Location x64") as string;
+                using var key = hive.OpenSubKey(@"SOFTWARE\Unity Technologies\Installer");
+                if (key == null) continue;
 
-                if (string.IsNullOrEmpty(installPath)) continue;
+                foreach (var subKeyName in key.GetSubKeyNames())
+                {
+                    using var subKey = key.OpenSubKey(subKeyName);
+                    var installPath = subKey?.GetValue("Location x64") as string;
 
-                var editorPath = Path.Combine(installPath, "Editor");
-                editorPaths.Add(editorPath);
+                    if (string.IsNullOrEmpty(installPath)) continue;
+
+                    var editorPath = Path.Combine(installPath, "Editor");
+                    editorPaths.Add(editorPath);
+                }
+            }
+        }
+        else if (platform is Platform.OSX)
+        {
+            // There's no central place where macOS Unity installs advertise themselves,
+            // so we just check the default installation path in Unity Hub.
+            
+            var appFolder = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            var editors = Path.Combine(appFolder, "Unity", "Hub", "Editor");
+            if (Directory.Exists(editors))
+            {
+                foreach (var versionPath in Directory.EnumerateDirectories(editors))
+                {
+                    var packagePath = Path.Combine(versionPath, "Unity.app");
+                    if (Directory.Exists(packagePath))
+                    {
+                        editorPaths.Add(packagePath);
+                    }
+                }
             }
         }
 
@@ -65,5 +88,15 @@ public static class EditorFinder
 
             Console.WriteLine("Invalid selection. Please try again.");
         }
+    }
+
+    public static string GetDataPath(string editorPath)
+    {
+        return Path.Combine(editorPath, PlatformHelper.GetPlatform() switch
+        {
+            Platform.Windows => "Data",
+            Platform.OSX => "Contents",
+            _ => throw new ArgumentOutOfRangeException()
+        });
     }
 }

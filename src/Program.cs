@@ -28,7 +28,7 @@ else
     }
 }
 
-var dataPath = Path.Combine(editorPath, "Data");
+var dataPath = EditorFinder.GetDataPath(editorPath);
 
 if (!Directory.Exists(dataPath))
 {

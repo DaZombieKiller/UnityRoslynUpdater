@@ -32,7 +32,7 @@ public sealed class DotNetInstallation
     {
         string? location = Environment.GetEnvironmentVariable("DOTNET_ROOT");
 
-        if (string.IsNullOrEmpty(location))
+        if (string.IsNullOrEmpty(location) && PlatformHelper.GetPlatform() is Platform.Windows)
             location = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\dotnet\Setup\InstalledVersions\x64", "InstallLocation", null) as string;
 
         if (string.IsNullOrEmpty(location))
@@ -43,6 +43,11 @@ public sealed class DotNetInstallation
 
     private static string GetDefaultInstallationLocation()
     {
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet");
+        return PlatformHelper.GetPlatform() switch
+        {
+            Platform.Windows => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet"),
+            Platform.OSX => "/usr/local/share/dotnet",
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 }
