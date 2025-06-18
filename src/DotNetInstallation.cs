@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using System.Runtime.Versioning;
+using Microsoft.Win32;
 using NuGet.Versioning;
 
 namespace UnityRoslynUpdater;
@@ -32,8 +33,8 @@ public sealed class DotNetInstallation
     {
         string? location = Environment.GetEnvironmentVariable("DOTNET_ROOT");
 
-        if (string.IsNullOrEmpty(location) && PlatformHelper.GetPlatform() is Platform.Windows)
-            location = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\dotnet\Setup\InstalledVersions\x64", "InstallLocation", null) as string;
+        if (string.IsNullOrEmpty(location) && OperatingSystem.IsWindows())
+            location = GetWindowsRegistryDotNetInstallLocation();
 
         if (string.IsNullOrEmpty(location))
             location = GetDefaultInstallationLocation();
@@ -43,11 +44,18 @@ public sealed class DotNetInstallation
 
     private static string GetDefaultInstallationLocation()
     {
-        return PlatformHelper.GetPlatform() switch
-        {
-            Platform.Windows => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet"),
-            Platform.OSX => "/usr/local/share/dotnet",
-            _ => throw new ArgumentOutOfRangeException()
-        };
+        if (OperatingSystem.IsWindows())
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet");
+
+        if (OperatingSystem.IsMacOS())
+            return "/usr/local/share/dotnet";
+        
+        throw new PlatformNotSupportedException();
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static string? GetWindowsRegistryDotNetInstallLocation()
+    {
+        return Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\dotnet\Setup\InstalledVersions\x64", "InstallLocation", null) as string;
     }
 }

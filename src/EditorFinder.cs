@@ -10,9 +10,8 @@ public static class EditorFinder
     /// <returns></returns>
     public static List<string> GetRegistryEditorPaths()
     {
-        var platform = PlatformHelper.GetPlatform();
         var editorPaths = new List<string>();
-        if (platform is Platform.Windows)
+        if (OperatingSystem.IsWindows())
         {
             var regPaths = new[] {
                 Registry.CurrentUser,
@@ -36,7 +35,7 @@ public static class EditorFinder
                 }
             }
         }
-        else if (platform is Platform.OSX)
+        else if (OperatingSystem.IsMacOS())
         {
             // There's no central place where macOS Unity installs advertise themselves,
             // so we just check the default installation path in Unity Hub.
@@ -92,11 +91,12 @@ public static class EditorFinder
 
     public static string GetDataPath(string editorPath)
     {
-        return Path.Combine(editorPath, PlatformHelper.GetPlatform() switch
-        {
-            Platform.Windows => "Data",
-            Platform.OSX => "Contents",
-            _ => throw new ArgumentOutOfRangeException()
-        });
+        if (OperatingSystem.IsWindows())
+            return Path.Combine(editorPath, "Data");
+    
+        if (OperatingSystem.IsMacOS())
+            return Path.Combine(editorPath, "Contents");
+    
+        throw new PlatformNotSupportedException();
     }
 }

@@ -1,8 +1,6 @@
 # Unity Roslyn Updater
 A tool to update the Roslyn compiler and C# language versions for a Unity installation.
 
-Supports Windows and macOS.
-
 # Usage
 **NOTE**: This will modify your Unity installation folder, administrative privileges are required!
 
