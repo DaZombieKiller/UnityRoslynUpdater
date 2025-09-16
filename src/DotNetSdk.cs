@@ -9,31 +9,43 @@ public sealed class DotNetSdk
 
     public SemanticVersion Version { get; }
 
+    public DotNetInstallation Installation { get; }
+
     public string RoslynLocation => Path.Combine(Location, "Roslyn", "bincore");
 
-    public DotNetSdk(string location, SemanticVersion version)
+    public DotNetSdk(string location, DotNetInstallation installation, SemanticVersion version)
     {
         ArgumentNullException.ThrowIfNull(location);
         Location = location;
+        Installation = installation;
         Version = version;
     }
 
     public string ComputeLatestCSharpLangVersion()
     {
-        // Load the bundled Roslyn installation.
-        var assembly = Assembly.LoadFrom(Path.Combine(RoslynLocation, "Microsoft.CodeAnalysis.CSharp.dll"));
+        var runtimes = Installation.EnumerateRuntimes().OrderByDescending(x => x.Version);
+        var runtime = runtimes.FirstOrDefault(r => Version.Equals(r.Version)) ?? runtimes.FirstOrDefault() ?? DotNetRuntime.Current;
+        using var context = new MetadataLoadContext(new PathAssemblyResolver(Directory.EnumerateFiles(runtime.Location, "*.dll")));
+        var assembly = context.LoadFromAssemblyPath(Path.Combine(RoslynLocation, "Microsoft.CodeAnalysis.CSharp.dll"));
+        var versions = new List<int>();
 
-        // We need the LanguageVersion and LanguageVersionFacts types.
-        var versions = assembly.GetType("Microsoft.CodeAnalysis.CSharp.LanguageVersion")!;
-        var facts = assembly.GetType("Microsoft.CodeAnalysis.CSharp.LanguageVersionFacts")!;
+        foreach (var field in assembly.GetType("Microsoft.CodeAnalysis.CSharp.LanguageVersion")!.GetFields())
+        {
+            if (field.Name == "value__")
+                continue;
 
-        // Retrieve the value of LanguageVersion.Latest, which we will resolve to a LangVersion string.
-        var version = Enum.Parse(versions, "Latest");
+            if (field.GetRawConstantValue() is not int value)
+                continue;
 
-        // Convert from "Latest" to a specific version.
-        version = facts.GetMethod("MapSpecifiedToEffectiveVersion")!.Invoke(null, new[] { version });
+            if (value >= int.MaxValue - 2)
+                continue;
 
-        // Map the version to a LangVersion string.
-        return (string)facts.GetMethod("ToDisplayString")!.Invoke(null, new[] { version })!;
+            versions.Add(value);
+        }
+
+        versions.Sort();
+        int version = versions[^1];
+        (int major, int minor) = version > 7 ? int.DivRem(version, 100) : (version, 0);
+        return $"{major}.{minor}";
     }
 }
