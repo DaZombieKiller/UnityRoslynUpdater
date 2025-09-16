@@ -21,7 +21,7 @@ public sealed class DotNetInstallation
         {
             var directoryName = Path.GetFileName(directory);
 
-            if (!SemanticVersion.TryParse(directoryName, out SemanticVersion version))
+            if (!SemanticVersion.TryParse(directoryName, out SemanticVersion? version))
                 continue;
 
             yield return new DotNetSdk(Path.GetFullPath(directory), version);
