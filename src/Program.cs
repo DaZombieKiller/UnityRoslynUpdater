@@ -116,6 +116,7 @@ bool TryPatchCompilerOptions()
 
 TryPatchSourceGenerator(Path.Combine(dataPath, "Tools", "Unity.SourceGenerators", "Unity.SourceGenerators.dll"));
 TryPatchSourceGenerator(Path.Combine(dataPath, "Tools", "Compilation", "Unity.SourceGenerators", "Unity.SourceGenerators.dll"));
+TryPatchSourceGenerator(Path.Combine(dataPath, "Tools", "BuildPipeline", "Unity.SourceGenerators", "Unity.SourceGenerators.dll"));
 
 bool TryPatchSourceGenerator(string dllPath)
 {
