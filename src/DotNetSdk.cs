@@ -1,5 +1,5 @@
-﻿using System.Reflection;
-using NuGet.Versioning;
+﻿using NuGet.Versioning;
+using AsmResolver.DotNet;
 
 namespace UnityRoslynUpdater;
 
@@ -9,32 +9,26 @@ public sealed class DotNetSdk
 
     public SemanticVersion Version { get; }
 
-    public DotNetInstallation Installation { get; }
-
     public string RoslynLocation => Path.Combine(Location, "Roslyn", "bincore");
 
-    public DotNetSdk(string location, DotNetInstallation installation, SemanticVersion version)
+    public DotNetSdk(string location, SemanticVersion version)
     {
         ArgumentNullException.ThrowIfNull(location);
         Location = location;
-        Installation = installation;
         Version = version;
     }
 
     public string ComputeLatestCSharpLangVersion()
     {
-        var runtimes = Installation.EnumerateRuntimes().OrderByDescending(x => x.Version);
-        var runtime = runtimes.FirstOrDefault(r => Version.Equals(r.Version)) ?? runtimes.FirstOrDefault() ?? DotNetRuntime.Current;
-        using var context = new MetadataLoadContext(new PathAssemblyResolver(Directory.EnumerateFiles(runtime.Location, "*.dll")));
-        var assembly = context.LoadFromAssemblyPath(Path.Combine(RoslynLocation, "Microsoft.CodeAnalysis.CSharp.dll"));
+        var assembly = AssemblyDefinition.FromFile(Path.Combine(RoslynLocation, "Microsoft.CodeAnalysis.CSharp.dll"));
         var versions = new List<int>();
 
-        foreach (var field in assembly.GetType("Microsoft.CodeAnalysis.CSharp.LanguageVersion")!.GetFields())
+        foreach (var field in assembly.Modules[0].GetTypeByFullName("Microsoft.CodeAnalysis.CSharp.LanguageVersion")!.Fields)
         {
             if (field.Name == "value__")
                 continue;
 
-            if (field.GetRawConstantValue() is not int value)
+            if (field.Constant?.InterpretData() is not int value)
                 continue;
 
             if (value >= int.MaxValue - 2)

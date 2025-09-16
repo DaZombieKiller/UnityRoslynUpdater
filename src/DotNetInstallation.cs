@@ -15,19 +15,6 @@ public sealed class DotNetInstallation
         Location = location;
     }
 
-    public IEnumerable<DotNetRuntime> EnumerateRuntimes()
-    {
-        foreach (string directory in Directory.EnumerateDirectories(Path.Combine(Location, "shared", "Microsoft.NETCore.App")))
-        {
-            var directoryName = Path.GetFileName(directory);
-
-            if (!SemanticVersion.TryParse(directoryName, out SemanticVersion? version))
-                continue;
-
-            yield return new DotNetRuntime(Path.GetFullPath(directory), this, version);
-        }
-    }
-
     public IEnumerable<DotNetSdk> EnumerateSDKs()
     {
         foreach (string directory in Directory.EnumerateDirectories(Path.Combine(Location, "sdk")))
@@ -37,7 +24,7 @@ public sealed class DotNetInstallation
             if (!SemanticVersion.TryParse(directoryName, out SemanticVersion? version))
                 continue;
 
-            yield return new DotNetSdk(Path.GetFullPath(directory), this, version);
+            yield return new DotNetSdk(Path.GetFullPath(directory), version);
         }
     }
 
