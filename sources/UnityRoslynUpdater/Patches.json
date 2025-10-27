@@ -1,0 +1,39 @@
+[
+  {
+    "path": ["Unity.Collections", "NativeArray`1"],
+    "patches":
+    [
+      // Patch 'in NativeArray<T>' to 'scoped in NativeArray<T>'
+      // Solves CS8347 in com.unity.render-pipelines.core caused by .NET 7 breaking change:
+      // https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/breaking-changes/compiler%20breaking%20changes%20-%20dotnet%207#method-ref-struct-return-escape-analysis-depends-on-ref-escape-of-ref-arguments
+      {
+        "$type": "AddAttributeOnParameters",
+        "method": "op_Implicit",
+        "signature": "System.Span`1<!0> *(Unity.Collections.NativeArray`1<!0>&)",
+        "attribute": ["System.Runtime.CompilerServices", "ScopedRefAttribute"],
+        "parameters": ["source"]
+      },
+      {
+        "$type": "AddAttributeOnParameters",
+        "method": "op_Implicit",
+        "signature": "System.ReadOnlySpan`1<!0> *(Unity.Collections.NativeArray`1<!0>&)",
+        "attribute": ["System.Runtime.CompilerServices", "ScopedRefAttribute"],
+        "parameters": ["source"]
+      }
+    ]
+  },
+  {
+    "path": ["Unity.Collections", "NativeArray`1", "ReadOnly"],
+    "patches":
+    [
+      // Patch 'in NativeArray<T>.ReadOnly' to 'scoped in NativeArray<T>.ReadOnly'
+      {
+        "$type": "AddAttributeOnParameters",
+        "method": "op_Implicit",
+        "signature": "System.ReadOnlySpan`1<!0> *(Unity.Collections.NativeArray`1+ReadOnly<!0>&)",
+        "attribute": ["System.Runtime.CompilerServices", "ScopedRefAttribute"],
+        "parameters": ["source"]
+      }
+    ]
+  }
+]

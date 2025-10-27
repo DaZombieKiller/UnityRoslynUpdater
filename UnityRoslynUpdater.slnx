@@ -1,0 +1,4 @@
+<Solution>
+  <Project DefaultStartup="true" Path="sources/UnityRoslynUpdater/UnityRoslynUpdater.csproj" />
+  <Project Path="sources/EmbeddedTypes/EmbeddedTypes.csproj" />
+</Solution>

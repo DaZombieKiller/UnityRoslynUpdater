@@ -1,38 +1,28 @@
 # Unity Roslyn Updater
 A tool to update the Roslyn compiler and C# language versions for a Unity installation.
 
-# Usage
+# Installation
 **NOTE**: This will modify your Unity installation folder, administrative privileges are required!
+
+## Interactive Mode
+Launch the tool directly to interactively select a Unity editor version to patch.
+
+## Command Line (Advanced) Mode
+Pass the Unity editor path to `UnityRoslynUpdater.exe`:
 
 `UnityRoslynUpdater.exe <path to Unity Editor folder>`
 
 For example: `UnityRoslynUpdater.exe "C:\Program Files\Unity\Hub\Editor\2022.3.8f1\Editor"`
 
-# Notes on C# 14+
-Due to changes introduced in C# 14, some code may no longer compile.
+# Usage
+After updating the Roslyn compiler, newer C# language versions are available but not enabled by default. To enable them, you must explicitly opt in for each assembly definition in your project.
 
-`UnityEngine.TestRunner` from the `com.unity.test-framework` package suffers from the [Calling `Reverse` on an array](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/first-class-span-types#calling-reverse-on-an-array) issue introduced by first-class span types in C# 14.
-
-In order to work around this issue, you may copy the contents of the `compat` folder into `Packages/com.unityroslynupdater.compat`.
-
-# Using C# 12+
-C# 11 is the most recent language version that works correctly with Visual Studio in a UnityRoslynUpdater-patched Unity install.
-
-This is because the `com.unity.ide.visualstudio` package does not recognize newer versions, and will limit the `<LangVersion>` property in generated `.csproj` files to `11`.
-
-To work around this issue, create a `Directory.Build.targets` file next to your project's `Assets` directory containing the following (replace `12` with your desired language version):
-
-```xml
-<Project>
-  <PropertyGroup>
-    <LangVersion>12</LangVersion>
-  </PropertyGroup>
-</Project>
+Create a `csc.rsp` file in the same directory as your assembly definition (`.asmdef`) file with the following content (replace `14` with your desired language version):
+```
+-langversion:14
 ```
 
-After you have done this, navigate to Edit -> Project Settings -> Player in Unity, and scroll down to the 'Additional Compiler Arguments' section. Add a new entry containing `-langversion:12` (again replacing `12` with your desired language version).
-
-Note that you may need to delete the Visual Studio cache directory (`.vs`) in order for these changes to take effect.
+**NOTE**: Version 2.0.24 or later of the `com.unity.ide.visualstudio` package is required for the language version specified in `csc.rsp` to be reflected in the generated `.csproj` files.
 
 # Language Support
 * Working
