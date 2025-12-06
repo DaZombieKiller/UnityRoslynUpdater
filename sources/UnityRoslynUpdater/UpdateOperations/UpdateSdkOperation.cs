@@ -40,6 +40,10 @@ internal sealed class UpdateSdkOperation : IUpdateOperation
 
         Directory.CreateSymbolicLink(Path.Combine(context.EditorDataPath, "NetCoreRuntime"), DotNetRoot.GetLocation());
         Directory.CreateSymbolicLink(Path.Combine(context.EditorDataPath, "DotNetSdkRoslyn"), Path.Combine(sdk.Location, "Roslyn", "bincore"));
+
+        // Leave behind a file denoting which SDK we are currently linked to.
+        File.WriteAllText(Path.Combine(context.EditorDataPath, ".dotnet-link"), sdk.Location);
+
         Console.WriteLine($"Linked to .NET SDK at {sdk.Location}");
         return Task.CompletedTask;
     }
