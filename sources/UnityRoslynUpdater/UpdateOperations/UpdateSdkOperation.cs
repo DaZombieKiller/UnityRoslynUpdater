@@ -18,28 +18,41 @@ internal sealed class UpdateSdkOperation : IUpdateOperation
         Directory.CreateDirectory(Path.Combine(context.EditorDataPath, "BuiltInDotNetSdk"));
         ProcessBuiltInSdkDirectory(Path.Combine(context.EditorDataPath, "DotNetSdkRoslyn"));
         ProcessBuiltInSdkDirectory(Path.Combine(context.EditorDataPath, "NetCoreRuntime"));
+        bool dotNetSdk = ProcessBuiltInSdkDirectory(Path.Combine(context.EditorDataPath, "DotNetSdk"));
 
-        void ProcessBuiltInSdkDirectory(string path)
+        bool ProcessBuiltInSdkDirectory(string path)
         {
-            if (Directory.ResolveLinkTarget(path, returnFinalTarget: true) is null)
+            try
             {
-                // The directory is not a symbolic link, so we probably haven't
-                // patched this Unity installation yet. We'll move the directory
-                // into the BuiltInDotNetSdk directory so the symbolic link can
-                // be created.
-                var destination = Path.Combine(context.EditorDataPath, "BuiltInDotNetSdk", Path.GetFileName(path));
-                Directory.Move(path, destination);
-                return;
-            }
+                if (Directory.ResolveLinkTarget(path, returnFinalTarget: true) is null)
+                {
+                    // The directory is not a symbolic link, so we probably haven't
+                    // patched this Unity installation yet. We'll move the directory
+                    // into the BuiltInDotNetSdk directory so the symbolic link can
+                    // be created.
+                    var destination = Path.Combine(context.EditorDataPath, "BuiltInDotNetSdk", Path.GetFileName(path));
+                    Directory.Move(path, destination);
+                    return true;
+                }
 
-            // The directory IS a symbolic link, meaning we have most likely
-            // patched this installation previously. We'll delete the link so
-            // it can be updated.
-            Directory.Delete(path, recursive: false);
+                // The directory IS a symbolic link, meaning we have most likely
+                // patched this installation previously. We'll delete the link so
+                // it can be updated.
+                Directory.Delete(path, recursive: false);
+                return true;
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // Intentionally ignored.
+                return false;
+            }
         }
 
         Directory.CreateSymbolicLink(Path.Combine(context.EditorDataPath, "NetCoreRuntime"), DotNetRoot.GetLocation());
         Directory.CreateSymbolicLink(Path.Combine(context.EditorDataPath, "DotNetSdkRoslyn"), Path.Combine(sdk.Location, "Roslyn", "bincore"));
+
+        if (dotNetSdk)
+            Directory.CreateSymbolicLink(Path.Combine(context.EditorDataPath, "DotNetSdk"), DotNetRoot.GetLocation());
 
         // Leave behind a file denoting which SDK we are currently linked to.
         File.WriteAllText(Path.Combine(context.EditorDataPath, ".dotnet-link"), sdk.Location);
